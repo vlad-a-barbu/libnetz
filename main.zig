@@ -1,4 +1,5 @@
 const std = @import("std");
+const j = @import("json.zig");
 
 fn echo(conn: std.net.Server.Connection) void {
     defer conn.stream.close();
@@ -31,9 +32,13 @@ fn prime_time(allocator: std.mem.Allocator, conn: std.net.Server.Connection) voi
     defer linebuff.deinit();
 
     readline(&linebuff, conn.stream);
-    std.debug.print("[{d}] <<{s}>>\n", .{ linebuff.items.len, linebuff.items });
+    std.debug.print("[{d} bytes] request: <<{s}>>\n", .{ linebuff.items.len, linebuff.items });
 
-    // todo: deserialize linebuff json
+    if (j.handlePrimeRequest(allocator, linebuff.items)) |prime| {
+        std.debug.print("prime: {any}\n", .{prime});
+    } else |err| {
+        std.debug.print("error: {any}\n", .{err});
+    }
 }
 
 pub fn main() !void {
